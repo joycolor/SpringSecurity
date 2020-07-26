@@ -9,28 +9,39 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 /**
  * @author :KSea
  * @description :
- * @createDate :2020/7/24
+ * @createDate :2020/7/25
  */
 @EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SpringSecurity extends WebSecurityConfigurerAdapter {
+    //设置哪些角色可以访问
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        //设置授权规则
         http.authorizeRequests().antMatchers("/").permitAll()
+                //为什么文件路径不需要/views呢
                 .antMatchers("/level1/**").hasRole("vip1")
                 .antMatchers("/level2/**").hasRole("vip2")
                 .antMatchers("/level3/**").hasRole("vip3");
 
-        //没有权限跳转登录页面
-        http.formLogin();
+        //记住我
+        http.rememberMe().rememberMeParameter("remember");
+        //访问没有权限时跳转
+        http.formLogin()
+            .loginPage("/toLogin")
+                .loginProcessingUrl("/usr/login")
+                .passwordParameter("password")
+                .usernameParameter("username");
+        //注销
+        http.logout().logoutSuccessUrl("/");
+        //
+        http.csrf().disable();
     }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        //制定认证规则
         auth.inMemoryAuthentication().passwordEncoder(new BCryptPasswordEncoder())
-                .withUser("admin").password(new BCryptPasswordEncoder().encode("admin")).roles("vip1","vip2","vip3")
+                .withUser("admin").password(new BCryptPasswordEncoder().encode("admin")).roles("vip1", "vip2", "vip3")
                 .and()
                 .withUser("user").password(new BCryptPasswordEncoder().encode("user")).roles("vip1");
+
     }
 }
